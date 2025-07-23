@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Karnaugh Map Visualizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f2f2f2;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    td {
+      width: 50px;
+      height: 50px;
+      text-align: center;
+      vertical-align: middle;
+      border: 1px solid #333;
+      background-color: white;
+      font-size: 18px;
+    }
+    td.active {
+      background-color: #4CAF50;
+      color: white;
+    }
+    input, select, button {
+      margin: 5px;
+      padding: 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Karnaugh Map Visualizer</h1>
+  <label for="variables">Number of Variables (2-4):</label>
+  <select id="variables">
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+  </select>
+
+  <label for="minterms">Minterms (comma separated):</label>
+  <input type="text" id="minterms" placeholder="e.g. 0,1,2,5" />
+
+  <button onclick="generateKMap()">Generate K-Map</button>
+
+  <div id="kmap"></div>
+
+  <script>
+    function grayCode(n) {
+      return n ^ (n >> 1);
+    }
+
+    function generateKMap() {
+      const numVars = parseInt(document.getElementById('variables').value);
+      const mintermsInput = document.getElementById('minterms').value.trim();
+      if (!mintermsInput) {
+        alert('Please enter minterms.');
+        return;
+      }
+
+      const minterms = mintermsInput.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      if (minterms.some(m => m < 0 || m >= (1 << numVars))) {
+        alert('Minterms must be between 0 and ' + ((1 << numVars) - 1));
+        return;
+      }
+
+      const rowVars = Math.floor(numVars / 2);
+      const colVars = numVars - rowVars;
+      const rows = 1 << rowVars;
+      const cols = 1 << colVars;
+
+      const map = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+      minterms.forEach(m => {
+        const row = grayCode(m >> colVars);
+        const col = grayCode(m & ((1 << colVars) - 1));
+        if (row < rows && col < cols) {
+          map[row][col] = 1;
+        }
+      });
+
+      let tableHTML = '<table>';
+      for (let i = 0; i < rows; i++) {
+        tableHTML += '<tr>';
+        for (let j = 0; j < cols; j++) {
+          const active = map[i][j] === 1 ? 'active' : '';
+          tableHTML += `<td class="${active}">${map[i][j]}</td>`;
+        }
+        tableHTML += '</tr>';
+      }
+      tableHTML += '</table>';
+
+      document.getElementById('kmap').innerHTML = tableHTML;
+    }
+  </script>
+</body>
+</html>
